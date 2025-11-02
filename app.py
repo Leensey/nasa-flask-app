@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 load_dotenv()
 
 app = Flask(__name__)
-API_KEY = os.getenv("NASA_API_KEY")
+API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")
 
 def get_apod(date=None):
     url = "https://api.nasa.gov/planetary/apod"
