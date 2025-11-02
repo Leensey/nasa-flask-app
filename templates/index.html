@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NASA Astronomy Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-gray-800 shadow-lg p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-yellow-400">NASA Astronomy Dashboard</h1>
+        <span class="text-gray-300 text-sm">Powered by NASA APIs</span>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-10">
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="bg-red-600 text-white p-3 rounded">{{ error }}</div>
+        {% endif %}
+
+        <div class="mb-4 flex items-center gap-3 max-w-sm">
+                <h2 class="text-xl font-semibold mb-4 whitespace-nowrap">Choose a day to explore</h2>
+                <form method="POST" class="mb-4 flex gap-3 max-w-sm">
+                    <input
+                        type="date"
+                        name="date"
+                        class="flex-grow px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white"
+                        value="{{ apod.date if apod and apod.date else '' }}"
+                    />
+                    <button
+                        type="submit"
+                        class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400"
+                    >Submit</button>
+                </form>
+            </div>
+
+        <!-- Astronomy Picture of the Day (APOD) -->
+        <section class="bg-gray-800 rounded-xl shadow-md p-6">
+            
+            <h1 class="text-xl font-semibold mb-4">Astronomy Picture of the Day</h1>
+            {% if apod %}
+                <h3 class="font-bold text-lg">{{ apod.title }} <span class="text-gray-400 text-sm">({{ apod.date }})</span></h3>
+                {% if apod.media_type == "image" %}
+                    <img src="{{ apod.url }}" alt="{{ apod.title }}" class="mt-4 rounded-lg max-w-full" />
+                {% elif apod.media_type == "video" %}
+                    <iframe
+                        src="{{ apod.url }}"
+                        frameborder="0"
+                        allowfullscreen
+                        class="mt-4 w-full aspect-video rounded-lg"
+                    ></iframe>
+                {% endif %}
+                <p class="mt-4 text-gray-300">{{ apod.explanation }}</p>
+            {% endif %}
+        </section>
+
+        <!-- Mars Rover Photos Preview -->
+        <section class="bg-gray-800 rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Mars Rover Photos (Curiosity)</h2>
+            {% if mars_photos %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for photo in mars_photos[:3] %}
+                        <div class="rounded overflow-hidden shadow-lg bg-gray-700">
+                            <img src="{{ photo.img_src }}" alt="Mars Rover Photo" class="w-full" />
+                            <div class="p-2">
+                                <p class="text-sm">Camera: {{ photo.camera.full_name }}</p>
+                                <p class="text-xs text-gray-400">Date: {{ photo.earth_date }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-400">No Mars rover photos available.</p>
+            {% endif %}
+        </section>
+
+<!-- Near-Earth Object Tracker -->
+<section class="bg-gray-800 rounded-xl shadow-md p-6 overflow-x-auto">
+    <h2 class="text-xl font-semibold mb-4">Near-Earth Object Tracker (Today)</h2>
+    {% if neo and neo.near_earth_objects %}
+        {% set today = neo.near_earth_objects.keys()|list|first %}
+        {% set asteroids = neo.near_earth_objects[today] %}
+        <table class="min-w-full text-sm table-auto border-collapse border border-gray-600">
+            <thead>
+                <tr class="bg-gray-700 text-left">
+                    <th class="p-2 border border-gray-600">Name</th>
+                    <th class="p-2 border border-gray-600">Diameter (m)</th>
+                    <th class="p-2 border border-gray-600">Velocity (km/h)</th>
+                    <th class="p-2 border border-gray-600">Miss Distance (km)</th>
+                    <th class="p-2 border border-gray-600">Hazardous</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asteroid in asteroids[:5] %}
+                    <tr class="border border-gray-700 hover:bg-gray-700">
+                        <td class="p-2 border border-gray-600">{{ asteroid.name }}</td>
+                        <td class="p-2 border border-gray-600">
+                            {{ "%.1f"|format(asteroid.estimated_diameter.meters.estimated_diameter_max | float) }}
+                        </td>
+                        <td class="p-2 border border-gray-600">
+                            {% if asteroid.close_approach_data and asteroid.close_approach_data|length > 0 %}
+                                {% set approach = asteroid.close_approach_data[0] %}
+                                {{ "%.0f"|format(approach.relative_velocity.kilometers_per_hour | float) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="p-2 border border-gray-600">
+                            {% if asteroid.close_approach_data and asteroid.close_approach_data|length > 0 %}
+                                {% set approach = asteroid.close_approach_data[0] %}
+                                {{ "%.0f"|format(approach.miss_distance.kilometers | float) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="p-2 border border-gray-600">
+                            {% if asteroid.is_potentially_hazardous_asteroid %}
+                                <span class="text-red-500 font-bold">Yes</span>
+                            {% else %}
+                                No
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-gray-400">No asteroid data available for today.</p>
+    {% endif %}
+</section>
+
+
+    </main>
+
+</body>
+</html>
